@@ -18,8 +18,7 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
 
     def find_all_documents(self, database_name: str, collection_name: str):
         collection = self.get_collection(database_name, collection_name)
-        return pd.DataFrame(collection.findall())
-        # return collection.findall()
+        return pd.DataFrame(list(collection.find()))
 
     def insert_document(self, database_name: str, collection_name: str, document: dict):
         collection = self.get_collection(database_name, collection_name)
@@ -34,15 +33,17 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
         return _query(database_name, collection_name, query)
 
 # Replace <connection-string> with your MongoDB Atlas connection string
-connection_string = "mongodb+srv://root_Dev:xNYnlsCTeOpNfr1W@cluster0.zsfxajf.mongodb.net/?retryWrites=true&w=majority"
+connection_string = ""
 
 # from pymongo import MongoClient
 import streamlit as st
 conn = st.experimental_connection("mongodb", type=MongoDBConnection, connection_string=connection_string)
-x = conn.get_collection("student_database", "students")
+# x = conn.get_collection("student_database", "students")
+# st.write(x)
 z = conn.find_all_documents("student_database", "students")
-st.dataframe(z)
-
-for s in z:
-    st.write(s)
+# st.dataframe(z)
 st.write(z)
+
+# for s in z:
+#     st.write(s)
+# st.write(z)
