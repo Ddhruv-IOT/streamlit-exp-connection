@@ -23,15 +23,18 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
 
         return client[database]
 
-    def get_collection(self, collection_name: str):
+    def get_collection(self, collection_name: str) -> pymongo.collection.Collection:
+        self.collection = collection_name
         return self._instance[collection_name]
 
-    def find_all_documents(self, collection_name: str):
-        collection = self.get_collection(collection_name)
-        return pd.DataFrame((collection.find()))
+    def find_all_documents(self, collection_name: str = None):
+        collection = self.get_collection(self.collection)
+        if collection_name:
+            collection = self.get_collection(collection_name)
+        return pd.DataFrame(list(collection.find()))
 
-    def insert_document(self, database_name: str, collection_name: str, document: dict):
-        collection = self.get_collection(database_name, collection_name)
+    def insert_document(self, collection_name: str, document: dict):
+        collection = self.get_collection(collection_name)
         return collection.insert_one(document)
 
     def query(
