@@ -13,24 +13,21 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             connection_string = kwargs.pop("connection_string")
         else:
             connection_string = self._secrets["connection_string"]
-        
+
         if "database" in kwargs:
             database = kwargs.pop("database")
         else:
             database = self._secrets["database"]
-        
-        if "collection" in kwargs:
-            collection = kwargs.pop("collection")
-        else:
-            collection = self._secrets["collection"]
-        
-        return pymongo.MongoClient(connection_string, **kwargs)
 
-    def get_collection(self, database_name: str, collection_name: str):
-        return self._instance[database_name][collection_name]
+        client = pymongo.MongoClient(connection_string, **kwargs)
 
-    def find_all_documents(self, database_name: str, collection_name: str):
-        collection = self.get_collection(database_name, collection_name)
+        return client[database]
+
+    def get_collection(self, collection_name: str):
+        return self._instance[collection_name]
+
+    def find_all_documents(self, collection_name: str):
+        collection = self.get_collection(collection_name)
         return pd.DataFrame((collection.find()))
 
     def insert_document(self, database_name: str, collection_name: str, document: dict):
@@ -48,5 +45,3 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             return pd.DataFrame(list(collection.find(query)))
 
         return _query(database_name, collection_name, query)
-
-
