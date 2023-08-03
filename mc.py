@@ -25,13 +25,14 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             collection_name = self._secrets["collection_name"]
 
         client = pymongo.MongoClient(connection_string, **kwargs)
+        self.client = client
 
         return client[database][collection_name]
 
-    def find_all_documents(self, ttl: int = 1000):
+    def show_all_documents(self, ttl: int = 1000, **kwargs):
         @cache_data(ttl=ttl)
         def _find_all_documents():
-            return pd.DataFrame(list(self._instance.find()))
+            return pd.DataFrame(list(self._instance.find(**kwargs)))
 
         return _find_all_documents()
 
@@ -68,44 +69,46 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
 
         return _find_one(filter)
 
-    def insert_document(self, document: dict):
-        return self._instance.insert_one(document)
+    def insert_document(self, document: dict, **kwargs):
+        return self._instance.insert_one(document, **kwargs)
 
-    def insert_many_documents(self, documents: list):
-        return self._instance.insert_many(documents)
+    def insert_many_documents(self, documents: list, **kwargs):
+        return self._instance.insert_many(documents, **kwargs)
 
-    def update_document(self, query: dict, update: dict):
-        return self._instance.update_one(query, {"$set": update})
+    def update_document(self, query: dict, update: dict, **kwargs):
+        return self._instance.update_one(query, {"$set": update}, **kwargs)
 
-    def update_documents(self, query: dict, update: dict):
-        return self._instance.update_many(query, {"$set": update})
+    def update_documents(self, query: dict, update: dict, **kwargs):
+        return self._instance.update_many(query, {"$set": update}, **kwargs)
 
-    def delete_document(self, query: dict):
-        return self._instance.delete_one(query)
+    def delete_document(self, query: dict, **kwargs):
+        return self._instance.delete_one(query, **kwargs)
 
-    def delete_documents(self, query: dict):
-        return self._instance.delete_many(query)
+    def delete_documents(self, query: dict, **kwargs):
+        return self._instance.delete_many(query, **kwargs)
 
-    def count_documents(self, query: dict, ttl: int = 1000):
+    def count_documents(self, query: dict, ttl: int = 1000, **kwargs):
         @cache_data(ttl=ttl)
-        def _count_documents(query: dict):
-            return self._instance.count_documents(query)
+        def _count_documents(query: dict, **kwargs):
+            return self._instance.count_documents(query, **kwargs)
 
-        return _count_documents(query)
+        return _count_documents(query, **kwargs)
 
-    def distinct_values(self, field: str, query: dict = None, ttl: int = 1000):
+    def distinct_values(
+        self, field: str, query: dict = None, ttl: int = 1000, **kwargs
+    ):
         @cache_data(ttl=ttl)
-        def _distinct_values(field: str, query: dict = None):
-            return self._instance.distinct(field, filter=query)
+        def _distinct_values(field: str, query: dict = None, **kwargs):
+            return self._instance.distinct(field, filter=query, **kwargs)
 
-        return _distinct_values(field, query)
+        return _distinct_values(field, query, **kwargs)
 
-    def query(self, query: dict, ttl: int = 3600) -> pd.DataFrame:
+    def query(self, query: dict, ttl: int = 3600, **kwargs) -> pd.DataFrame:
         @cache_data(ttl=ttl)
-        def _query(query: dict) -> pd.DataFrame:
-            return pd.DataFrame(list(self._instance.find(query)))
+        def _query(query: dict, **kwargs) -> pd.DataFrame:
+            return pd.DataFrame(list(self._instance.find(query, **kwargs)))
 
-        return _query(query)
+        return _query(query, **kwargs)
 
     def paginate_documents(
         self, page_number: int, items_per_page: int, ttl: int = 1000
@@ -120,3 +123,7 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             return pd.DataFrame(list(documents))
 
         return _paginate_documents(page_number, items_per_page)
+    
+    def close(self):
+        self.client.close()
+        return "Connection closed"
