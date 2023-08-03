@@ -2,7 +2,6 @@ from streamlit.connections import ExperimentalBaseConnection
 from streamlit.runtime.caching import cache_data
 import pymongo
 import pandas as pd
-from pwd_ import pw
 
 
 class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
@@ -115,6 +114,7 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
     ) -> pd.DataFrame:
         @cache_data(ttl=ttl)
         def _paginate_documents(page_number: int, items_per_page: int) -> pd.DataFrame:
+            print(page_number)
             # Calculate the number of documents to skip based on the page number and items per page
             skip_count = (page_number - 1) * items_per_page
 
