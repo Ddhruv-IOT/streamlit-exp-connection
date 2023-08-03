@@ -15,18 +15,20 @@ fake = Faker()
 with st.sidebar:
     selected = option_menu(
         "Db Operations",
-        ["Connect", "Read", "Write", "Update", "Delete",  "query", "Extra"],
-        icons=["plug", "book", "pencil", "pen", "trash",  "question", "star"],
+        ["Connect", "Read", "Write", "Update", "Delete", "query", "Extra"],
+        icons=["plug", "book", "pencil", "pen", "trash", "question", "star"],
         menu_icon="database",
         default_index=0,
     )
-    selected
+    st.info(f"Currently on {selected} page")
 
 # connect to mongodb using st.experimental_connection
 conn = st.experimental_connection("mongodb", type=MongoDBConnection)
 
 if selected == "Connect":
+    st.header("Connection Details")
     st.write(conn)
+    st.help(conn)
 
 elif selected == "Read":
     st.header("Showing All Documents")
@@ -119,7 +121,7 @@ elif selected == "Write":
 
 if selected == "Update":
     st.header("Update a Single Document")
-    
+
     # Update a document in the collection
     with st.form(key="update"):
         name = st.text_input("Enter Name")
@@ -127,36 +129,36 @@ if selected == "Update":
         select_age = st.slider("Select Age", 1, 100, 3)
         update = {"age": select_age}
         submit = st.form_submit_button("Update")
-    
+
     st.info("Only the first matching document will be updated!", icon="❗")
 
     # update the document in the collection, only the first matching document will be updated
     result = conn.update_document(query, update)
-    
+
     # display the result, if 0 it means no document was updated
     st.write("Update result:", result.modified_count)
-    
+
     # display the updated data
     data = conn.show_all_documents(ttl=0)
     st.dataframe(data, width=1000)
-    
+
     st.divider()
     st.header("Update Multiple Documents")
-    
+
     with st.form(key="update_multiple"):
         select_age_limit = st.slider("Select age limit for status young", 1, 55, 3)
         submit = st.form_submit_button("Update")
-    
+
     query = {"age": {"$lt": select_age_limit}}
     update = {"status": "young"}
-    result = conn.update_documents( query, update)
+    result = conn.update_documents(query, update)
     st.write("Update result for young", result.modified_count)
-    
+
     query = {"age": {"$gt": select_age_limit}}
     update = {"status": "old"}
-    result = conn.update_documents( query, update)
+    result = conn.update_documents(query, update)
     st.write("Update result for old:", result.modified_count)
-    
+
     # display the updated data
     data = conn.show_all_documents(ttl=0)
     st.dataframe(data, width=1000)
@@ -164,25 +166,27 @@ if selected == "Update":
 
 if selected == "Delete":
     st.header("Delete a Single Document")
-    
+
     # Delete a document in the collection
     with st.form(key="delete"):
         name = st.text_input("Enter Name to Delete")
         query_delete = {"name": name}
         submit = st.form_submit_button("Update")
-    
+
     st.info("Only the first matching document will be deleted!", icon="❗")
 
     # Delete a document from the collection
     query = {"name": query_delete}
-    result = conn.delete_document( query)
+    result = conn.delete_document(query)
     st.write("Deletion count: ", result.deleted_count)
-    
+
     st.divider()
-    
+
     st.header("Delete Multiple Documents")
-    
-    st.write("The code for deletion of multiple documents is commented out for safety reasons")
+
+    st.write(
+        "The code for deletion of multiple documents is commented out for safety reasons"
+    )
     code = """ 
             # Delete multiple documents from the collection
             
@@ -208,35 +212,44 @@ if selected == "query":
         st.error(e)
         query_filter = {}
         st.info("Running default query: All")
-    
+
     result = conn.query(query=query_filter, ttl=1000)
     st.write(result)
 
+if selected == "Extra":
+    st.header("Extra Features")
+
+    st.write("Example usage of extra features are shown below")
+
+    st.subheader("Count Documents")
+    # Count documents in the collection based on a query
+    st.write("The code")
+    st.code(
+        """
+            query = {"status": "young"}
+            count = conn.count_documents(query)
+            st.write("Number of young people:", count)
+            """
+    )
+
+    query = {"status": "young"}
+    count = conn.count_documents(query)
+    st.write("Number of young people:", count)
+
+    st.subheader("Distinct Values")
+    # Get distinct values of a field in the collection
+    st.write("The code")
+    st.code(
+        """
+            field_name = "name"
+            distinct_values = conn.distinct_values(field_name)
+            st.write("Distinct names:", distinct_values)
+
+            """
+    )
+    field_name = "name"
+    distinct_values = conn.distinct_values(field_name)
+    st.info("Displaying only first 10 names")
+    st.write("Distinct names:", distinct_values[0:10])
     
-
-# # Count documents in the collection based on a query
-# query = {"status": "young"}
-# count = conn.count_documents(  query)
-# st.write("Number of young people:", count)
-
-# # Get distinct values of a field in the collection
-# field_name = "name"
-# distinct_values = conn.distinct_values(  field_name)
-# st.write("Distinct names:", distinct_values)
-
-
-# filter = {"name": "Abc"}
-# projection = {"name": 1, }
-# result   = conn.find_one( filter=filter, projection=projection)
-# st.write(result)
-
-# filter = {"age": {"$gte": 25}}
-# projection = {"name": 1, "age": 1}
-# sort = [("age", pymongo.ASCENDING)]
-# limit = 5
-# skip = 0
-# result2 = conn.find( filter=filter, projection=projection, sort=sort, limit=limit, skip=skip)
-
-# st.write(result2)
-
-# st.write(conn.close()
+    st.error("Find and Find all functions haven't been covered in this demo. Please refer to the documentation for more details")
