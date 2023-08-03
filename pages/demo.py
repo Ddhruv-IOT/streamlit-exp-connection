@@ -80,7 +80,7 @@ elif selected == "Write":
         with st.spinner("Writing to Database"):
             # insert the data into the collection
             if st.session_state["written"] == False:
-                op = conn.insert_document({"name": data})
+                op = conn.insert_document({"name": data, "age": 20})
                 st.write(op)
 
             st.session_state["written"] = True
@@ -171,14 +171,18 @@ if selected == "Delete":
     with st.form(key="delete"):
         name = st.text_input("Enter Name to Delete")
         query_delete = {"name": name}
-        submit = st.form_submit_button("Update")
+        submit = st.form_submit_button("Delete")
 
     st.info("Only the first matching document will be deleted!", icon="❗")
 
     # Delete a document from the collection
-    query = {"name": query_delete}
-    result = conn.delete_document(query)
+    st.write("Query to delete:", query_delete)
+    result = conn.delete_document(query_delete)
     st.write("Deletion count: ", result.deleted_count)
+    
+    # display the updated data
+    data = conn.show_all_documents(ttl=0)
+    st.dataframe(data, width=1000)
 
     st.divider()
 
