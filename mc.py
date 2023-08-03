@@ -123,7 +123,7 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             return pd.DataFrame(list(documents))
 
         return _paginate_documents(page_number, items_per_page)
-    
+
     def close(self):
         self.client.close()
         return "Connection closed"
