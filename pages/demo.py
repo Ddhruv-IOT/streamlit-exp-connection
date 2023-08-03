@@ -83,7 +83,7 @@ elif selected == "Write":
 
             st.session_state["written"] = True
 
-        if st.button("Show All Documents after Update"):
+        if st.button("Show All Documents after Update", key="show_all"):
             # kept ttl=0 so that it will not be cached and updated data will be shown
             data = conn.show_all_documents(ttl=0)
             st.dataframe(data, width=1000)
@@ -111,14 +111,57 @@ elif selected == "Write":
         result = conn.insert_many_documents(documents_to_insert)
         st.write("Inserted document IDs:", result.inserted_ids)
 
-# z = conn.find_all_documents(ttl=0)
-# st.dataframe(z)
+        st.write("Showing All Documents after Insertion")
+        # kept ttl=0 so that it will not be cached and updated data will be shown
+        data = conn.show_all_documents(ttl=0)
+        st.dataframe(data, width=1000)
 
-# # Update a document in the collection
-# query = {"name": "Alice"}
-# update = {"age": 26}
-# result = conn.update_document(  query, update)
-# st.write("Update result:", result.modified_count)
+
+if selected == "Update":
+    st.header("Update a Single Document")
+    
+    # Update a document in the collection
+    with st.form(key="update"):
+        name = st.text_input("Enter Name")
+        query = {"name": name}
+        select_age = st.slider("Select Age", 1, 100, 3)
+        update = {"age": select_age}
+        submit = st.form_submit_button("Update")
+    
+    st.info("Only the first matching document will be updated!", icon="❗")
+
+    # update the document in the collection, only the first matching document will be updated
+    result = conn.update_document(query, update)
+    
+    # display the result, if 0 it means no document was updated
+    st.write("Update result:", result.modified_count)
+    
+    # display the updated data
+    data = conn.show_all_documents(ttl=0)
+    st.dataframe(data, width=1000)
+    
+    st.divider()
+    st.header("Update Multiple Documents")
+    
+    with st.form(key="update_multiple"):
+        select_age_limit = st.slider("Select age limit for status young", 1, 55, 3)
+        submit = st.form_submit_button("Update")
+    
+    query = {"age": {"$lt": select_age_limit}}
+    update = {"status": "young"}
+    result = conn.update_documents( query, update)
+    st.write("Update result for young", result.modified_count)
+    
+    query = {"age": {"$gt": select_age_limit}}
+    update = {"status": "old"}
+    result = conn.update_documents( query, update)
+    st.write("Update resul for old:", result.modified_count)
+    
+     # display the updated data
+    data = conn.show_all_documents(ttl=0)
+    st.dataframe(data, width=1000)
+
+
 
 # # Update multiple documents in the collection
 # query = {"age": {"$lt": 30}}
