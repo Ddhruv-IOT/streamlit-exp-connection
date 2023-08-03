@@ -37,15 +37,15 @@ elif selected == "Read":
     data = conn.show_all_documents(ttl=1000)
 
     # display the data
-    st.dataframe(data, width=1000)
+    st.dataframe(data)
 
     st.divider()
 
     st.header("Reading with Pagination")
 
     # Values to use for pagination
-    page_number = st.slider("Page Number", 1, 10, 3)
-    number_of_docs = st.slider("Number of Docs", 1, 10, 5)
+    page_number = st.slider("Page Number", 1, 10, 1)
+    number_of_docs = st.slider("Number of Docs", 1, 10, 6)
 
     # perform the pagination and display the data
     st.dataframe(
@@ -54,7 +54,6 @@ elif selected == "Read":
             items_per_page=number_of_docs,
             ttl=1000,
         ),
-        width=1000,
     )
 
 
@@ -88,7 +87,7 @@ elif selected == "Write":
         if st.button("Show All Documents after Update", key="show_all"):
             # kept ttl=0 so that it will not be cached and updated data will be shown
             data = conn.show_all_documents(ttl=0)
-            st.dataframe(data, width=1000)
+            st.dataframe(data,  )
 
     st.divider()
 
@@ -116,7 +115,7 @@ elif selected == "Write":
         st.write("Showing All Documents after Insertion")
         # kept ttl=0 so that it will not be cached and updated data will be shown
         data = conn.show_all_documents(ttl=0)
-        st.dataframe(data, width=1000)
+        st.dataframe(data)
 
 
 if selected == "Update":
@@ -140,7 +139,7 @@ if selected == "Update":
 
     # display the updated data
     data = conn.show_all_documents(ttl=0)
-    st.dataframe(data, width=1000)
+    st.dataframe(data,  )
 
     st.divider()
     st.header("Update Multiple Documents")
@@ -161,7 +160,7 @@ if selected == "Update":
 
     # display the updated data
     data = conn.show_all_documents(ttl=0)
-    st.dataframe(data, width=1000)
+    st.dataframe(data)
 
 
 if selected == "Delete":
@@ -182,7 +181,7 @@ if selected == "Delete":
     
     # display the updated data
     data = conn.show_all_documents(ttl=0)
-    st.dataframe(data, width=1000)
+    st.dataframe(data)
 
     st.divider()
 
