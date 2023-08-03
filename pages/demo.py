@@ -3,6 +3,14 @@ import streamlit as st
 from mongodb_conn import MongoDBConnection
 from streamlit_option_menu import option_menu
 
+# Fake things ahead !!!
+from faker import Faker  # for generating fake user names
+import random as rd  # for generating random user age
+
+# Create a Faker instance
+fake = Faker()
+
+
 # sidebar menu
 with st.sidebar:
     selected = option_menu(
@@ -47,31 +55,61 @@ elif selected == "Read":
         width=1000,
     )
 
+
 elif selected == "Write":
     st.header("Insert a Single Document")
     data = st.text_input("Write a Test Name")
+
+    st.info(
+        "Session state has been used to keep track of the insertion and will allow insertion only once",
+        icon="⚠️",
+    )
+    if "written" not in st.session_state:
+        st.session_state["written"] = False
+
+    # if no data is entered, so it should not be inserted
     if data in "":
         st.warning("Please enter a name")
     else:
         st.write("You have Entered: ", data)
+        st.write("Write Chance Left: ", 1 - st.session_state["written"])
+
+        # display loading spinner while data is being inserted
         with st.spinner("Writing to Database"):
-            op = conn.insert_document({"name": data})
-            st.write(op)
+            # insert the data into the collection
+            if st.session_state["written"] == False:
+                op = conn.insert_document({"name": data})
+                st.write(op)
+
+            st.session_state["written"] = True
 
         if st.button("Show All Documents after Update"):
+            # kept ttl=0 so that it will not be cached and updated data will be shown
             data = conn.show_all_documents(ttl=0)
-            st.dataframe(data)
+            st.dataframe(data, width=1000)
 
     st.divider()
 
-    # Insert many documents into the collection
-    documents_to_insert = [
-        {"name": "Alice", "age": 25},
-        {"name": "Bob", "age": 30},
-        {"name": "Carol", "age": 35},
-    ]
-    result = conn.insert_many_documents(documents_to_insert)
-    st.write("Inserted document IDs:", result.inserted_ids)
+    # insert many documents into the collection
+    st.header("Insert Many Documents")
+
+    # generate fake data on the fly
+    def fake_data():
+        documents_to_insert = [
+            {"name": fake.name(), "age": rd.randint(20, 40)},
+            {"name": fake.name(), "age": rd.randint(20, 80)},
+            {"name": fake.name(), "age": rd.randint(40, 90)},
+        ]
+        return documents_to_insert
+
+    if st.button("Generate Fake Data & Insert"):
+        documents_to_insert = fake_data()
+        st.write("Documents to insert:")
+        st.code(documents_to_insert, language="python")
+
+        # insert the documents into the collection and get the inserted IDs
+        result = conn.insert_many_documents(documents_to_insert)
+        st.write("Inserted document IDs:", result.inserted_ids)
 
 # z = conn.find_all_documents(ttl=0)
 # st.dataframe(z)
