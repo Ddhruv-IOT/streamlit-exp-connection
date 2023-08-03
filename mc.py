@@ -18,24 +18,25 @@ class MongoDBConnection(ExperimentalBaseConnection[pymongo.MongoClient]):
             database = kwargs.pop("database")
         else:
             database = self._secrets["database"]
+        
+        if "collection_name" in kwargs:
+            collection_name = kwargs.pop("collection_name")
+        else:
+            collection_name = self._secrets["collection_name"]
+
 
         client = pymongo.MongoClient(connection_string, **kwargs)
 
-        return client[database]
+        return client[database][collection_name]
 
-    def get_collection(self, collection_name: str) -> pymongo.collection.Collection:
-        self.collection = collection_name
-        return self._instance[collection_name]
+    def find_all_documents(self, ttl: int = 1000):
+        @cache_data(ttl=ttl)
+        def _find_all_documents():
+            return pd.DataFrame(list(self._instance.find()))
+        return _find_all_documents()
 
-    def find_all_documents(self, collection_name: str = None):
-        collection = self.get_collection(self.collection)
-        if collection_name:
-            collection = self.get_collection(collection_name)
-        return pd.DataFrame(list(collection.find()))
-
-    def insert_document(self, collection_name: str, document: dict):
-        collection = self.get_collection(collection_name)
-        return collection.insert_one(document)
+    def insert_document(self, document: dict):
+        return self._instance.insert_one(document)
 
     def query(
         self, database_name: str, collection_name: str, query: dict, ttl: int = 3600
