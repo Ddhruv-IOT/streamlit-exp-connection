@@ -15,8 +15,8 @@ fake = Faker()
 with st.sidebar:
     selected = option_menu(
         "Db Operations",
-        ["Connect", "Read", "Write", "Update", "Delete", "Find", "query", "Extra"],
-        icons=["plug", "book", "pencil", "pen", "trash", "search", "question", "star"],
+        ["Connect", "Read", "Write", "Update", "Delete",  "query", "Extra"],
+        icons=["plug", "book", "pencil", "pen", "trash",  "question", "star"],
         menu_icon="database",
         default_index=0,
     )
@@ -155,29 +155,64 @@ if selected == "Update":
     query = {"age": {"$gt": select_age_limit}}
     update = {"status": "old"}
     result = conn.update_documents( query, update)
-    st.write("Update resul for old:", result.modified_count)
+    st.write("Update result for old:", result.modified_count)
     
-     # display the updated data
+    # display the updated data
     data = conn.show_all_documents(ttl=0)
     st.dataframe(data, width=1000)
 
 
+if selected == "Delete":
+    st.header("Delete a Single Document")
+    
+    # Delete a document in the collection
+    with st.form(key="delete"):
+        name = st.text_input("Enter Name to Delete")
+        query_delete = {"name": name}
+        submit = st.form_submit_button("Update")
+    
+    st.info("Only the first matching document will be deleted!", icon="❗")
 
-# # Update multiple documents in the collection
-# query = {"age": {"$lt": 30}}
-# update = {"status": "young"}
-# result = conn.update_documents(  query, update)
-# st.write("Update result:", result.modified_count)
+    # Delete a document from the collection
+    query = {"name": query_delete}
+    result = conn.delete_document( query)
+    st.write("Deletion count: ", result.deleted_count)
+    
+    st.divider()
+    
+    st.header("Delete Multiple Documents")
+    
+    st.write("The code for deletion of multiple documents is commented out for safety reasons")
+    code = """ 
+            # Delete multiple documents from the collection
+            
+            # The query or the condition to delete multiple documents
+            query = {"age": {"$gte": 26}}
+            
+            # the class method to delete multiple documents 
+            result = conn.delete_documents(query) 
+            
+            # Display the number of documents deleted, 0 means no document was deleted
+            st.write("Deletion count:", result.deleted_count) 
+            """
+    st.code(code, language="python")
 
-# # Delete a document from the collection
-# query = {"name": "Carol"}
-# result = conn.delete_document(  query)
-# st.write("Deletion count:", result.deleted_count)
 
-# # Delete multiple documents from the collection
-# query = {"age": {"$gte": 26}}
-# result = conn.delete_documents(  query)
-# st.write("Deletion count:", result.deleted_count)
+if selected == "query":
+    query_filter = st.text_input("Enter your Mongo Query")
+    # query_filter = {"age": {"$gte": 25}, }
+    try:
+        query_filter = eval(query_filter)
+        st.success("Running query: " + str(query_filter))
+    except Exception as e:
+        st.error(e)
+        query_filter = {}
+        st.info("Running default query: All")
+    
+    result = conn.query(query=query_filter, ttl=1000)
+    st.write(result)
+
+    
 
 # # Count documents in the collection based on a query
 # query = {"status": "young"}
@@ -189,19 +224,11 @@ if selected == "Update":
 # distinct_values = conn.distinct_values(  field_name)
 # st.write("Distinct names:", distinct_values)
 
-# # Don't forget to close the connection when you're done
-# # conn.close()
-# # Please replace <connection-string> with your actual M
-
-# z = conn.find_all_documents(ttl=0)
-# st.dataframe(z)
-
 
 # filter = {"name": "Abc"}
 # projection = {"name": 1, }
 # result   = conn.find_one( filter=filter, projection=projection)
 # st.write(result)
-# import pymongo
 
 # filter = {"age": {"$gte": 25}}
 # projection = {"name": 1, "age": 1}
@@ -212,4 +239,4 @@ if selected == "Update":
 
 # st.write(result2)
 
-# st.write(conn.close())
+# st.write(conn.close()
